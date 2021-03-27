@@ -120,9 +120,9 @@ Error FormatterInternal::formatFeature(String& sb, uint32_t featureId) noexcept 
 // ============================================================================
 
 ASMJIT_FAVOR_SIZE Error FormatterInternal::formatCondCode(String& sb, uint32_t condCode) noexcept {
-  const char condCodeData[] =
-    "eq\0" "ne\0" "cs\0" "hs\0" "cc\0" "lo\0" "mi\0" "pl\0" "vs\0"
-    "vc\0" "hi\0" "ls\0" "ge\0" "lt\0" "gt\0" "le\0" "al\0" "na\0"
+  static const char condCodeData[] =
+    "eq\0" "ne\0" "cs\0" "cc\0" "mi\0" "pl\0" "vs\0" "vc\0"
+    "hi\0" "ls\0" "ge\0" "lt\0" "gt\0" "le\0" "al\0" "na\0"
     "<Unknown>";
   return sb.append(condCodeData + Support::min<uint32_t>(condCode, 16u) * 3);
 }
