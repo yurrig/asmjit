@@ -2238,123 +2238,6 @@ Error Assembler::_emit(uint32_t instId, const Operand_& o0, const Operand_& o1, 
     // [Base - Load / Store]
     // ------------------------------------------------------------------------
 
-    case InstDB::kEncodingBaseRM_NoImm: {
-      const InstDB::EncodingData::BaseRM_NoImm& opData = InstDB::EncodingData::baseRM_NoImm[encodingIndex];
-
-      if (isign4 == ENC_OPS2(Reg, Mem)) {
-        const Mem& m = o1.as<Mem>();
-        rmRel = &m;
-
-        uint32_t x;
-        if (!checkGpType(o0, opData.rType, &x))
-          goto InvalidInstruction;
-
-        if (!checkGpId(o0, opData.rHiId))
-          goto InvalidPhysId;
-
-        opcode.reset(opData.opcode());
-        opcode.addImm(x, opData.xOffset);
-        opcode.addReg(o0, 0);
-        goto EmitOp_MemBaseNoImm_Rn5;
-      }
-
-      break;
-    }
-
-    case InstDB::kEncodingBaseRM_SImm9: {
-      const InstDB::EncodingData::BaseRM_SImm9& opData = InstDB::EncodingData::baseRM_SImm9[encodingIndex];
-
-      if (isign4 == ENC_OPS2(Reg, Mem)) {
-        const Mem& m = o1.as<Mem>();
-        rmRel = &m;
-
-        uint32_t x;
-        if (!checkGpType(o0, opData.rType, &x))
-          goto InvalidInstruction;
-
-        if (!checkGpId(o0, opData.rHiId))
-          goto InvalidPhysId;
-
-        if (m.hasBaseReg() && !m.hasIndex()) {
-          if (m.isOffset64Bit())
-            goto InvalidDisplacement;
-
-          int32_t offset32 = m.offsetLo32() >> opData.immShift;
-          if (Support::shl(offset32, opData.immShift) != m.offsetLo32())
-            goto InvalidDisplacement;
-
-          if (!Support::isInt9(offset32))
-            goto InvalidDisplacement;
-
-          if (m.isFixedOffset()) {
-            opcode.reset(opData.offsetOp());
-          }
-          else {
-            if (!opData.prePostOp())
-              goto InvalidInstruction;
-
-            opcode.reset(opData.prePostOp());
-            opcode.xorImm(m.isPreIndex(), 11);
-          }
-
-          opcode.xorImm(x, opData.xOffset);
-          opcode.addImm(offset32 & 0x1FF, 12);
-          opcode.addReg(o0, 0);
-          goto EmitOp_MemBase_Rn5;
-        }
-
-        goto InvalidAddress;
-      }
-
-      break;
-    }
-
-    case InstDB::kEncodingBaseRM_SImm10: {
-      const InstDB::EncodingData::BaseRM_SImm10& opData = InstDB::EncodingData::baseRM_SImm10[encodingIndex];
-
-      if (isign4 == ENC_OPS2(Reg, Mem)) {
-        const Mem& m = o1.as<Mem>();
-        rmRel = &m;
-
-        uint32_t x;
-        if (!checkGpType(o0, opData.rType, &x))
-          goto InvalidInstruction;
-
-        if (!checkGpId(o0, opData.rHiId))
-          goto InvalidPhysId;
-
-        if (m.hasBaseReg() && !m.hasIndex()) {
-          if (m.isOffset64Bit())
-            goto InvalidDisplacement;
-
-          int32_t offset32 = m.offsetLo32() >> opData.immShift;
-          if (Support::shl(offset32, opData.immShift) != m.offsetLo32())
-            goto InvalidDisplacement;
-
-          if (!Support::isInt10(offset32))
-            goto InvalidDisplacement;
-
-          if (m.isPostIndex())
-            goto InvalidAddress;
-
-          // Offset has 10 bits, sign is stored in the 10th bit.
-          offset32 &= 0x3FF;
-
-          opcode.reset(opData.opcode());
-          opcode.xorImm(m.isPreIndex(), 11);
-          opcode.xorImm(x, opData.xOffset);
-          opcode.addImm(offset32 >> 9, 22);
-          opcode.addImm(offset32, 12);
-          opcode.addReg(o0, 0);
-          goto EmitOp_MemBase_Rn5;
-        }
-
-        goto InvalidAddress;
-      }
-
-      break;
-    }
-
     case InstDB::kEncodingBaseLdSt: {
       const InstDB::EncodingData::BaseLdSt& opData = InstDB::EncodingData::baseLdSt[encodingIndex];
 
@@ -2372,7 +2255,8 @@ Error Assembler::_emit(uint32_t instId, const Operand_& o0, const Operand_& o1, 
         // Instructions that work with either word or dword have the unsigned
         // offset shift set to 2 (word), so we set it to 3 (dword) if this is
         // X version of the instruction.
-        uint32_t immShift = uint32_t(opData.uOffsetShift) + x;
+        uint32_t xShiftMask = uint32_t(opData.uOffsetShift == 2);
+        uint32_t immShift = uint32_t(opData.uOffsetShift) + (x & xShiftMask);
 
         if (!armCheckMemBaseIndexRel(m))
           goto InvalidAddress;
@@ -2392,7 +2276,7 @@ Error Assembler::_emit(uint32_t instId, const Operand_& o0, const Operand_& o1, 
               goto InvalidAddressScale;
 
             opcode.reset(uint32_t(opData.registerOp) << 21);
-            opcode.addImm(x, opData.xOffset);
+            opcode.xorImm(x, opData.xOffset);
             opcode.addImm(opt, 13);
             opcode.addImm(s, 12);
             opcode |= B(11);
@@ -2410,7 +2294,7 @@ Error Assembler::_emit(uint32_t instId, const Operand_& o0, const Operand_& o1, 
               goto InvalidDisplacement;
 
             opcode.reset(uint32_t(opData.prePostOp) << 21);
-            opcode.addImm(x, opData.xOffset);
+            opcode.xorImm(x, opData.xOffset);
             opcode.addImm(offset32 & 0x1FF, 12);
             opcode.addImm(m.isPreIndex(), 11);
             opcode |= B(10);
@@ -2420,16 +2304,18 @@ Error Assembler::_emit(uint32_t instId, const Operand_& o0, const Operand_& o1, 
           else {
             uint32_t imm12 = uint32_t(offset32) >> immShift;
 
-            // The unsigned offset can have 12 bits.
-            if (!Support::isUInt12(imm12))
-              goto InvalidDisplacement;
-
-            // Make sure we didn't lose bits by applying the mandatory offset shift.
-            if ((imm12 << immShift) != uint32_t(offset32))
-              goto InvalidDisplacement;
+            // Alternative form of LDUR/STUR and related instructions as described by AArch64 reference manual:
+            //
+            // If this instruction is not encodable with scaled unsigned offset, try unscaled signed offset.
+            if (!Support::isUInt12(imm12) || (imm12 << immShift) != uint32_t(offset32)) {
+              instId = opData.uAltInstId;
+              instInfo = &InstDB::_instInfoTable[instId];
+              encodingIndex = instInfo->_encodingDataIndex;
+              goto Case_BaseLdurStur;
+            }
 
             opcode.reset(uint32_t(opData.uOffsetOp) << 22);
-            opcode.addImm(x, opData.xOffset);
+            opcode.xorImm(x, opData.xOffset);
             opcode.addImm(imm12, 10);
             opcode.addReg(o0, 0);
             goto EmitOp_MemBase_Rn5;
@@ -2440,7 +2326,7 @@ Error Assembler::_emit(uint32_t instId, const Operand_& o0, const Operand_& o1, 
             goto InvalidAddress;
 
           opcode.reset(uint32_t(opData.literalOp) << 24);
-          opcode.addImm(x, opData.xOffset);
+          opcode.xorImm(x, opData.xOffset);
           opcode.addReg(o0, 0);
           offsetFormat.resetToImmValue(OffsetFormat::kTypeCommon, 4, 5, 19, 2);
           goto EmitOp_Rel;
@@ -2573,6 +2459,124 @@ Error Assembler::_emit(uint32_t instId, const Operand_& o0, const Operand_& o1, 
 
         rmRel = &m;
         goto EmitOp_MemBaseNoImm_Rn5;
+      }
+
+      break;
+    }
+
+    case InstDB::kEncodingBaseRM_NoImm: {
+      const InstDB::EncodingData::BaseRM_NoImm& opData = InstDB::EncodingData::baseRM_NoImm[encodingIndex];
+
+      if (isign4 == ENC_OPS2(Reg, Mem)) {
+        const Mem& m = o1.as<Mem>();
+        rmRel = &m;
+
+        uint32_t x;
+        if (!checkGpType(o0, opData.rType, &x))
+          goto InvalidInstruction;
+
+        if (!checkGpId(o0, opData.rHiId))
+          goto InvalidPhysId;
+
+        opcode.reset(opData.opcode());
+        opcode.addImm(x, opData.xOffset);
+        opcode.addReg(o0, 0);
+        goto EmitOp_MemBaseNoImm_Rn5;
+      }
+
+      break;
+    }
+
+    case InstDB::kEncodingBaseRM_SImm9: {
+Case_BaseLdurStur:
+      const InstDB::EncodingData::BaseRM_SImm9& opData = InstDB::EncodingData::baseRM_SImm9[encodingIndex];
+
+      if (isign4 == ENC_OPS2(Reg, Mem)) {
+        const Mem& m = o1.as<Mem>();
+        rmRel = &m;
+
+        uint32_t x;
+        if (!checkGpType(o0, opData.rType, &x))
+          goto InvalidInstruction;
+
+        if (!checkGpId(o0, opData.rHiId))
+          goto InvalidPhysId;
+
+        if (m.hasBaseReg() && !m.hasIndex()) {
+          if (m.isOffset64Bit())
+            goto InvalidDisplacement;
+
+          int32_t offset32 = m.offsetLo32() >> opData.immShift;
+          if (Support::shl(offset32, opData.immShift) != m.offsetLo32())
+            goto InvalidDisplacement;
+
+          if (!Support::isInt9(offset32))
+            goto InvalidDisplacement;
+
+          if (m.isFixedOffset()) {
+            opcode.reset(opData.offsetOp());
+          }
+          else {
+            if (!opData.prePostOp())
+              goto InvalidInstruction;
+
+            opcode.reset(opData.prePostOp());
+            opcode.xorImm(m.isPreIndex(), 11);
+          }
+
+          opcode.xorImm(x, opData.xOffset);
+          opcode.addImm(offset32 & 0x1FF, 12);
+          opcode.addReg(o0, 0);
+          goto EmitOp_MemBase_Rn5;
+        }
+
+        goto InvalidAddress;
+      }
+
+      break;
+    }
+
+    case InstDB::kEncodingBaseRM_SImm10: {
+      const InstDB::EncodingData::BaseRM_SImm10& opData = InstDB::EncodingData::baseRM_SImm10[encodingIndex];
+
+      if (isign4 == ENC_OPS2(Reg, Mem)) {
+        const Mem& m = o1.as<Mem>();
+        rmRel = &m;
+
+        uint32_t x;
+        if (!checkGpType(o0, opData.rType, &x))
+          goto InvalidInstruction;
+
+        if (!checkGpId(o0, opData.rHiId))
+          goto InvalidPhysId;
+
+        if (m.hasBaseReg() && !m.hasIndex()) {
+          if (m.isOffset64Bit())
+            goto InvalidDisplacement;
+
+          int32_t offset32 = m.offsetLo32() >> opData.immShift;
+          if (Support::shl(offset32, opData.immShift) != m.offsetLo32())
+            goto InvalidDisplacement;
+
+          if (!Support::isInt10(offset32))
+            goto InvalidDisplacement;
+
+          if (m.isPostIndex())
+            goto InvalidAddress;
+
+          // Offset has 10 bits, sign is stored in the 10th bit.
+          offset32 &= 0x3FF;
+
+          opcode.reset(opData.opcode());
+          opcode.xorImm(m.isPreIndex(), 11);
+          opcode.xorImm(x, opData.xOffset);
+          opcode.addImm(offset32 >> 9, 22);
+          opcode.addImm(offset32, 12);
+          opcode.addReg(o0, 0);
+          goto EmitOp_MemBase_Rn5;
+        }
+
+        goto InvalidAddress;
       }
 
       break;
@@ -4467,13 +4471,13 @@ Error Assembler::_emit(uint32_t instId, const Operand_& o0, const Operand_& o1, 
           else {
             uint32_t imm12 = uint32_t(offset32) >> xsz;
 
-            // The unsigned offset can have 12 bits.
-            if (!Support::isUInt12(imm12))
-              goto InvalidDisplacement;
-
-            // Make sure we didn't lose bits by applying the mandatory offset shift.
-            if ((imm12 << xsz) != uint32_t(offset32))
-              goto InvalidDisplacement;
+            // If this instruction is not encodable with scaled unsigned offset, try unscaled signed offset.
+            if (!Support::isUInt12(imm12) || (imm12 << xsz) != uint32_t(offset32)) {
+              instId = opData.uAltInstId;
+              instInfo = &InstDB::_instInfoTable[instId];
+              encodingIndex = instInfo->_encodingDataIndex;
+              goto Case_SimdLdurStur;
+            }
 
             opcode.reset(uint32_t(opData.uOffsetOp) << 22);
             opcode.addImm(xsz & 3u, 30);
@@ -4558,6 +4562,7 @@ Error Assembler::_emit(uint32_t instId, const Operand_& o0, const Operand_& o1, 
     }
 
     case InstDB::kEncodingSimdLdurStur: {
+Case_SimdLdurStur:
       const InstDB::EncodingData::SimdLdurStur& opData = InstDB::EncodingData::simdLdurStur[encodingIndex];
 
       if (isign4 == ENC_OPS2(Reg, Mem)) {

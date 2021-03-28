@@ -240,14 +240,14 @@ const InstInfo _instInfoTable[] = {
   INST(Ldnp             , BaseLdpStp         , (0b0010100001, 0           , kWX, 31, 2)                                              , kRWI_WW   , 0                         , 0  , 1537), // #151
   INST(Ldp              , BaseLdpStp         , (0b0010100101, 0b0010100011, kWX, 31, 2)                                              , kRWI_W    , 0                         , 1  , 1542), // #152
   INST(Ldpsw            , BaseLdpStp         , (0b0110100101, 0b0110100011, kX , 0 , 2)                                              , kRWI_WW   , 0                         , 2  , 1546), // #153
-  INST(Ldr              , BaseLdSt           , (0b1011100101, 0b10111000010, 0b10111000011, 0b00011000, kWX, 30, 2)                  , kRWI_W    , 0                         , 0  , 1552), // #154
+  INST(Ldr              , BaseLdSt           , (0b1011100101, 0b10111000010, 0b10111000011, 0b00011000, kWX, 30, 2, Inst::kIdLdur)   , kRWI_W    , 0                         , 0  , 1552), // #154
   INST(Ldraa            , BaseRM_SImm10      , (0b1111100000100000000001, kX , kZR, 0, 3)                                            , kRWI_W    , 0                         , 0  , 1556), // #155
   INST(Ldrab            , BaseRM_SImm10      , (0b1111100010100000000001, kX , kZR, 0, 3)                                            , kRWI_W    , 0                         , 1  , 1562), // #156
-  INST(Ldrb             , BaseLdSt           , (0b0011100101, 0b00111000010, 0b00111000011, 0         , kW , 0 , 0)                  , kRWI_W    , 0                         , 1  , 1568), // #157
-  INST(Ldrh             , BaseLdSt           , (0b0111100101, 0b01111000010, 0b01111000011, 0         , kW , 0 , 1)                  , kRWI_W    , 0                         , 2  , 1573), // #158
-  INST(Ldrsb            , BaseLdSt           , (0b0011100110, 0b00111000100, 0b00111000101, 0         , kWX, 22, 0)                  , kRWI_W    , 0                         , 3  , 1578), // #159
-  INST(Ldrsh            , BaseLdSt           , (0b0111100110, 0b01111000100, 0b01111000101, 0         , kWX, 22, 1)                  , kRWI_W    , 0                         , 4  , 1584), // #160
-  INST(Ldrsw            , BaseLdSt           , (0b1011100110, 0b10111000100, 0b10111000101, 0b10011000, kX , 0 , 2)                  , kRWI_W    , 0                         , 5  , 1590), // #161
+  INST(Ldrb             , BaseLdSt           , (0b0011100101, 0b00111000010, 0b00111000011, 0         , kW , 0 , 0, Inst::kIdLdurb)  , kRWI_W    , 0                         , 1  , 1568), // #157
+  INST(Ldrh             , BaseLdSt           , (0b0111100101, 0b01111000010, 0b01111000011, 0         , kW , 0 , 1, Inst::kIdLdurh)  , kRWI_W    , 0                         , 2  , 1573), // #158
+  INST(Ldrsb            , BaseLdSt           , (0b0011100111, 0b00111000100, 0b00111000101, 0         , kWX, 22, 0, Inst::kIdLdursb) , kRWI_W    , 0                         , 3  , 1578), // #159
+  INST(Ldrsh            , BaseLdSt           , (0b0111100110, 0b01111000100, 0b01111000101, 0         , kWX, 22, 1, Inst::kIdLdursh) , kRWI_W    , 0                         , 4  , 1584), // #160
+  INST(Ldrsw            , BaseLdSt           , (0b1011100110, 0b10111000100, 0b10111000101, 0b10011000, kX , 0 , 2, Inst::kIdLdursw) , kRWI_W    , 0                         , 5  , 1590), // #161
   INST(Ldset            , BaseAtomicOp       , (0b1011100000100000001100, kWX, 30, 0)                                                , kRWI_WRX  , 0                         , 48 , 1596), // #162
   INST(Ldseta           , BaseAtomicOp       , (0b1011100010100000001100, kWX, 30, 1)                                                , kRWI_WRX  , 0                         , 49 , 1602), // #163
   INST(Ldsetab          , BaseAtomicOp       , (0b0011100010100000001100, kW , 0 , 1)                                                , kRWI_WRX  , 0                         , 50 , 1609), // #164
@@ -411,9 +411,9 @@ const InstInfo _instInfoTable[] = {
   INST(Stlxrh           , BaseAtomicOp       , (0b0100100000000000111111, kW , 0 , 1)                                                , kRWI_WRX  , 0                         , 110, 3376), // #322
   INST(Stnp             , BaseLdpStp         , (0b0010100000, 0           , kWX, 31, 2)                                              , kRWI_RRW  , 0                         , 4  , 3383), // #323
   INST(Stp              , BaseLdpStp         , (0b0010100100, 0b0010100010, kWX, 31, 2)                                              , kRWI_RRW  , 0                         , 5  , 3388), // #324
-  INST(Str              , BaseLdSt           , (0b1011100100, 0b10111000000, 0b10111000001, 0         , kWX, 30, 2)                  , kRWI_RW   , 0                         , 6  , 3392), // #325
-  INST(Strb             , BaseLdSt           , (0b0011100100, 0b00111000000, 0b00111000001, 0         , kW , 30, 0)                  , kRWI_RW   , 0                         , 7  , 3396), // #326
-  INST(Strh             , BaseLdSt           , (0b0111100100, 0b01111000000, 0b01111000001, 0         , kWX, 30, 1)                  , kRWI_RW   , 0                         , 8  , 3401), // #327
+  INST(Str              , BaseLdSt           , (0b1011100100, 0b10111000000, 0b10111000001, 0         , kWX, 30, 2, Inst::kIdStur)   , kRWI_RW   , 0                         , 6  , 3392), // #325
+  INST(Strb             , BaseLdSt           , (0b0011100100, 0b00111000000, 0b00111000001, 0         , kW , 30, 0, Inst::kIdSturb)  , kRWI_RW   , 0                         , 7  , 3396), // #326
+  INST(Strh             , BaseLdSt           , (0b0111100100, 0b01111000000, 0b01111000001, 0         , kWX, 30, 1, Inst::kIdSturh)  , kRWI_RW   , 0                         , 8  , 3401), // #327
   INST(Stset            , BaseAtomicSt       , (0b1011100000100000001100, kWX, 30)                                                   , kRWI_RX   , 0                         , 18 , 3406), // #328
   INST(Stsetl           , BaseAtomicSt       , (0b1011100001100000001100, kWX, 30)                                                   , kRWI_RX   , 0                         , 19 , 3426), // #329
   INST(Stsetb           , BaseAtomicSt       , (0b0011100000100000001100, kW , 0 )                                                   , kRWI_RX   , 0                         , 20 , 3412), // #330
@@ -633,7 +633,7 @@ const InstInfo _instInfoTable[] = {
   INST(Ld4r_v           , SimdLdNStN         , (0b0000110101100000111000, 0b0000000000000000000000, 4, 1)                            , kRWI_LDn  , 0                         , 7  , 1184), // #544
   INST(Ldnp_v           , SimdLdpStp         , (0b0010110001, 0b0000000000)                                                          , kRWI_WW   , 0                         , 0  , 1537), // #545
   INST(Ldp_v            , SimdLdpStp         , (0b0010110101, 0b0010110011)                                                          , kRWI_WW   , 0                         , 1  , 1542), // #546
-  INST(Ldr_v            , SimdLdSt           , (0b0011110101, 0b00111100010, 0b00111100011, 0b00011100)                              , kRWI_W    , 0                         , 0  , 1552), // #547
+  INST(Ldr_v            , SimdLdSt           , (0b0011110101, 0b00111100010, 0b00111100011, 0b00011100, Inst::kIdLdur_v)             , kRWI_W    , 0                         , 0  , 1552), // #547
   INST(Ldur_v           , SimdLdurStur       , (0b0011110001000000000000)                                                            , kRWI_W    , 0                         , 0  , 2142), // #548
   INST(Mla_v            , ISimdVVVe          , (0b0000111000100000100101, kVO_V_BHS, 0b0010111100000000000000, kVO_V_HS)             , kRWI_X    , F(VH0_15)                 , 0  , 246 ), // #549
   INST(Mls_v            , ISimdVVVe          , (0b0010111000100000100101, kVO_V_BHS, 0b0010111100000000010000, kVO_V_HS)             , kRWI_X    , F(VH0_15)                 , 1  , 931 ), // #550
@@ -769,7 +769,7 @@ const InstInfo _instInfoTable[] = {
   INST(St4_v            , SimdLdNStN         , (0b0000110100100000001000, 0b0000110000000000000000, 4, 0)                            , kRWI_STn  , 0                         , 11 , 3173), // #680
   INST(Stnp_v           , SimdLdpStp         , (0b0010110000, 0b0000000000)                                                          , kRWI_RRW  , 0                         , 2  , 3383), // #681
   INST(Stp_v            , SimdLdpStp         , (0b0010110100, 0b0010110010)                                                          , kRWI_RRW  , 0                         , 3  , 3388), // #682
-  INST(Str_v            , SimdLdSt           , (0b0011110100, 0b00111100000, 0b00111100001, 0b00000000)                              , kRWI_RW   , 0                         , 1  , 3392), // #683
+  INST(Str_v            , SimdLdSt           , (0b0011110100, 0b00111100000, 0b00111100001, 0b00000000, Inst::kIdStur_v)             , kRWI_RW   , 0                         , 1  , 3392), // #683
   INST(Stur_v           , SimdLdurStur       , (0b0011110000000000000000)                                                            , kRWI_RW   , 0                         , 1  , 3662), // #684
   INST(Sub_v            , ISimdVVV           , (0b0010111000100000100001, kVO_V_Any)                                                 , kRWI_W    , 0                         , 37 , 985 ), // #685
   INST(Subhn_v          , ISimdVVV           , (0b0000111000100000011000, kVO_V_B8H4S2)                                              , kRWI_W    , F(Narrow)                 , 38 , 2401), // #686
@@ -1148,15 +1148,15 @@ const BaseExtract baseExtract[1] = {
 };
 
 const BaseLdSt baseLdSt[9] = {
-  { 0b1011100101, 0b10111000010, 0b10111000011, 0b00011000, kWX, 30, 2 }, // ldr
-  { 0b0011100101, 0b00111000010, 0b00111000011, 0         , kW , 0 , 0 }, // ldrb
-  { 0b0111100101, 0b01111000010, 0b01111000011, 0         , kW , 0 , 1 }, // ldrh
-  { 0b0011100110, 0b00111000100, 0b00111000101, 0         , kWX, 22, 0 }, // ldrsb
-  { 0b0111100110, 0b01111000100, 0b01111000101, 0         , kWX, 22, 1 }, // ldrsh
-  { 0b1011100110, 0b10111000100, 0b10111000101, 0b10011000, kX , 0 , 2 }, // ldrsw
-  { 0b1011100100, 0b10111000000, 0b10111000001, 0         , kWX, 30, 2 }, // str
-  { 0b0011100100, 0b00111000000, 0b00111000001, 0         , kW , 30, 0 }, // strb
-  { 0b0111100100, 0b01111000000, 0b01111000001, 0         , kWX, 30, 1 }  // strh
+  { 0b1011100101, 0b10111000010, 0b10111000011, 0b00011000, kWX, 30, 2, Inst::kIdLdur }, // ldr
+  { 0b0011100101, 0b00111000010, 0b00111000011, 0         , kW , 0 , 0, Inst::kIdLdurb }, // ldrb
+  { 0b0111100101, 0b01111000010, 0b01111000011, 0         , kW , 0 , 1, Inst::kIdLdurh }, // ldrh
+  { 0b0011100111, 0b00111000100, 0b00111000101, 0         , kWX, 22, 0, Inst::kIdLdursb }, // ldrsb
+  { 0b0111100110, 0b01111000100, 0b01111000101, 0         , kWX, 22, 1, Inst::kIdLdursh }, // ldrsh
+  { 0b1011100110, 0b10111000100, 0b10111000101, 0b10011000, kX , 0 , 2, Inst::kIdLdursw }, // ldrsw
+  { 0b1011100100, 0b10111000000, 0b10111000001, 0         , kWX, 30, 2, Inst::kIdStur }, // str
+  { 0b0011100100, 0b00111000000, 0b00111000001, 0         , kW , 30, 0, Inst::kIdSturb }, // strb
+  { 0b0111100100, 0b01111000000, 0b01111000001, 0         , kWX, 30, 1, Inst::kIdSturh }  // strh
 };
 
 const BaseLdpStp baseLdpStp[6] = {
@@ -1760,8 +1760,8 @@ const SimdLdNStN simdLdNStN[12] = {
 };
 
 const SimdLdSt simdLdSt[2] = {
-  { 0b0011110101, 0b00111100010, 0b00111100011, 0b00011100 }, // ldr_v
-  { 0b0011110100, 0b00111100000, 0b00111100001, 0b00000000 }  // str_v
+  { 0b0011110101, 0b00111100010, 0b00111100011, 0b00011100, Inst::kIdLdur_v }, // ldr_v
+  { 0b0011110100, 0b00111100000, 0b00111100001, 0b00000000, Inst::kIdStur_v }  // str_v
 };
 
 const SimdLdpStp simdLdpStp[4] = {

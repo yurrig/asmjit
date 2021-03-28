@@ -445,6 +445,7 @@ struct BaseLdSt {
   uint32_t rType      : 2;
   uint32_t xOffset    : 5;
   uint32_t uOffsetShift : 3;
+  uint32_t uAltInstId : 14;
 };
 
 struct BaseLdpStp {
@@ -722,6 +723,7 @@ struct SimdLdSt {
   uint32_t prePostOp  : 11;
   uint32_t registerOp : 11;
   uint32_t literalOp  : 8;
+  uint32_t uAltInstId : 16;
 };
 
 struct SimdLdNStN {
