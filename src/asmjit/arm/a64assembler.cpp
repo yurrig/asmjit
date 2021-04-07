@@ -1388,7 +1388,7 @@ Error Assembler::_emit(uint32_t instId, const Operand_& o0, const Operand_& o1, 
         uint64_t immValue = imm12.valueAs<uint64_t>();
 
         if (immValue > 0xFFFu) {
-          if ((immValue & (0xFFFu << 12)) != 0)
+          if ((immValue & ~uint64_t(0xFFFu << 12)) != 0)
             goto InvalidImmediate;
           immShift = 1;
           immValue >>= 12;
